@@ -20,6 +20,28 @@
             result[8] = a[6]*b[2] + a[7]*b[5] + a[8]*b[8];
 
             return result;
+        },
+        invertMatrix: function(m) {
+            /*
+                [0, 1, 2
+                 3, 4, 5
+                 6, 7, 8]
+
+                [a, b, s
+                 c, d, s,
+                 t, t, 1]
+            */
+            var n = m[0] * m[4] - m[1] * m[3];
+            var result = m.slice();
+
+            result[0] = m[4] / n;
+            result[1] = -m[1] / n;
+            result[3] = -m[3] / n;
+            result[4] = m[0] / n;
+            result[6] = (m[3] * m[7] - m[4] * m[6]) / n;
+            result[7] = -(m[0] * m[7] - m[1] * m[6]) / n;
+
+            return result;
         }
     };
 
