@@ -19,7 +19,19 @@
     };
 
     var globalToLocal = function(x, y) {
-        
+        var transform = createjs.invertMatrix(this.getMatrix());
+        var parent = this.parent;
+        while (parent) {
+            if (parent.getMatrix) {
+                transform = createjs.mat3Mult(transform, createjs.invertMatrix(parent.getMatrix()));
+            }
+            parent = parent.parent;
+        }
+        var result = {
+            x: transform[0] * x + transform[3] * y + transform[6],
+            y: transform[1] * x + transform[4] * y + transform[7]
+        };
+        return result;
     };
 
     [createjs.Stage, createjs.Shape].forEach(function(constructor) {
