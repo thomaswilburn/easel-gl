@@ -10,7 +10,7 @@ module.exports = function(grunt) {
         concat: {
             easel: {
                 src: ["createjs.js", "Stage.js", "Graphics.js", "Shape.js", "Text.js", "Events.js", "DisplayTree.js"],
-                dest: "../EaselGL.js",
+                dest: "EaselGL.js",
                 options: {
                     process: function(src, path) {
                         return src.replace(/\/\*.*\*\/[\n\r]*/gm, "");
