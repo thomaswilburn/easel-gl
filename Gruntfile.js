@@ -13,6 +13,7 @@ module.exports = function(grunt) {
                 dest: "EaselGL.js",
                 options: {
                     process: function(src, path) {
+                        //stripping banners manually, because it didn't work using block: true
                         return src.replace(/\/\*.*\*\/[\n\r]*/gm, "");
                     },
                     banner: "/*jshint browser:true onevar:false boss:true*/\n/*global createjs*/\n"
