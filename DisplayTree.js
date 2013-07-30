@@ -18,7 +18,9 @@
         this.children = [];
     };
 
-    var globalToLocal = function() { return {x: 0, y: 0}; };
+    var globalToLocal = function(x, y) {
+        
+    };
 
     [createjs.Stage, createjs.Shape].forEach(function(constructor) {
         constructor.prototype.addChild = addChild;

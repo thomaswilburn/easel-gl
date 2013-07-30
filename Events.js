@@ -27,8 +27,14 @@
         return this.events[type].indexOf(f) > -1;
     };
     var fire = function(type, data) {
+        data = data || {};
+        if (typeof type === "object") {
+            data = type;
+            type = data.type;
+        } else {
+            data.type = type;
+        }
         var callbacks = this.events[type];
-        data.type = type;
         if (callbacks) {
             callbacks = callbacks.slice();
             for (var i = 0; i < callbacks.length; i++) {
@@ -41,7 +47,7 @@
         constructor.prototype.addEventListener = addEventListener;
         constructor.prototype.removeEventListener = removeEventListener;
         constructor.prototype.hasEventListener = hasEventListener;
-        constructor.prototype.fire = fire;
+        constructor.prototype.fire = constructor.prototype.dispatchEvent = fire;
     });
 
 })();

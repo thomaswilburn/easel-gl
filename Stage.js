@@ -7,11 +7,13 @@
     createjs.Stage = function(canvas) {
         this.canvas = canvas;
         this.children = [];
-        this.gl = this.canvas.getContext("webgl") || this.canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true });
+        this.gl = this.canvas.getContext("webgl", { preserveDrawingBuffer: true, antialias: false }) || 
+            this.canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, antialias: false });
         this.setupGL();
         this.bindEvents();
         this.idMap = {};
         this.events = {};
+        this.drawingBuffer = null;
     };
 
     createjs.Stage.prototype = {
@@ -177,6 +179,7 @@
             var identity = [1, 0, 0, 0, 1, 0, 0, 0, 1];
             var self = this;
             this.idMap = {};
+            gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
             //walk the children list
             var walker = function(children, transform) {
@@ -188,6 +191,7 @@
                     }
                     //if not selecting an item, use the child's GL program.
                     if (gl.current !== gl.pick) {
+                        self.drawingBuffer = null;
                         if (child instanceof createjs.Shape) {
                             gl.vector.use();
                         } else {
@@ -214,19 +218,37 @@
             var canvas = this.canvas;
             var gl = this.gl;
             var self = this;
+            var entered = null;
 
             ["mousemove", "click"].forEach(function(event) {
                 canvas.addEventListener(event, function(e) {
-                    gl.pick.use();
-                    self.update();
-                    var pixelData = new Uint8Array(4);
-                    gl.readPixels(e.offsetX, canvas.height - e.offsetY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelData);
-                    gl.current = null;
-                    self.update();
+                    if (!self.drawingBuffer) {
+                        gl.pick.use();
+                        self.update();
+                        var buffer = new Uint8Array(canvas.width * canvas.height * 4);
+                        gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
+                        gl.current = null;
+                        self.update();
+                        self.drawingBuffer = buffer;
+                    }
+                    //canvas coordinates are upside-down
+                    var address = (e.offsetX + (canvas.height - e.offsetY) * canvas.width) * 4;
+                    var pixelData = self.drawingBuffer.subarray(address, address + 4);
                     var id = (pixelData[0] << 8) + pixelData[2];
                     var child = self.idMap[id];
                     if (child) {
                         child.fire(event, e);
+                        if (child !== entered) {
+                            //this is a mouseover
+                            if (entered) {
+                                entered.fire("mouseout");
+                            }
+                            child.fire("mouseover");
+                            entered = child;
+                        }
+                    } else if (entered) {
+                        entered.fire("mouseout");
+                        entered = null;
                     }
                 });
             });
