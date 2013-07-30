@@ -4,11 +4,12 @@
 (function() {
 "use strict";
 
-    createjs.Stage = function(canvas) {
+    createjs.Stage = function(canvas, antialias) {
         this.canvas = canvas;
         this.children = [];
-        this.gl = this.canvas.getContext("webgl", { preserveDrawingBuffer: true, antialias: false }) || 
-            this.canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, antialias: false });
+        antialias = antialias || false;
+        this.gl = this.canvas.getContext("webgl", { preserveDrawingBuffer: true, antialias: antialias }) || 
+            this.canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, antialias: antialias });
         this.setupGL();
         this.bindEvents();
         this.idMap = {};
@@ -234,6 +235,7 @@
                     //canvas coordinates are upside-down
                     var address = (e.offsetX + (canvas.height - e.offsetY) * canvas.width) * 4;
                     var pixelData = self.drawingBuffer.subarray(address, address + 4);
+                    if (pixelData[1]) console.log(pixelData[1]);
                     var id = (pixelData[0] << 8) + pixelData[2];
                     var child = self.idMap[id];
                     if (child) {
