@@ -49,7 +49,7 @@
 
     createjs.getGUID = function() {
         //we have to use wide values, because the pick buffer will be anti-aliased
-        return seed += 8;
+        return seed += 13;
     };
 
 })();
