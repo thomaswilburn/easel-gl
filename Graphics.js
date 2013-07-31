@@ -250,6 +250,7 @@
     createjs.Graphics.getHSL = function(h, s, l) {
         l /= 100;
         s /= 100;
+        h = h % 360;
         var c = (1 - Math.abs(2 * l - 1)) * s;
         h = (h / 60);
         var x = c * (1 - Math.abs((h % 2) - 1));

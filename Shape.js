@@ -15,6 +15,8 @@
         this.parent = null;
         this.id = createjs.getGUID();
         this.events = {};
+        this.mouseEnabled = true;
+        this.visible = true;
     };
 
     createjs.Shape.prototype = {
@@ -22,7 +24,9 @@
             var g = this.graphics;
             //create a matrix for transformation, pass it into the graphics object
             var transformed = createjs.mat3Mult(this.getMatrix(), transform);
-            g.render(transformed, gl, this.id);
+            if (this.visible) {
+                g.render(transformed, gl, this.id);
+            }
             return transformed;
         },
         getMatrix: function() {
