@@ -151,9 +151,9 @@
             var fSource = 
                 "precision mediump float;" +
                 "precision mediump int;" +
-                "uniform vec2 u_id;" + 
+                "uniform vec3 u_id;" + 
                 "void main() {" +
-                    "gl_FragColor = vec4(u_id.x / 255.0, 0.0, u_id.y / 255.0, 1.0);" +
+                    "gl_FragColor = vec4(u_id.x / 255.0, u_id.y / 255.0, u_id.z / 255.0, 1.0);" +
                 "}";
 
             var vertex = pick.vertex = gl.createShader(gl.VERTEX_SHADER);
@@ -206,12 +206,13 @@
                         //pick (selection) mode
                         //drop out if the item is invisible to the mouse
                         if (child.mouseEnabled === false) {
-                            return;
+                            continue;
                         }
                         //otherwise, we set the ID uniform and render
-                        var msb = child.id >> 8;
-                        var lsb = child.id & 0xFF;
-                        gl.uniform2f(gl.current.uniforms.id, msb, lsb);
+                        var r = (child.id >> 16) & 0xFF;
+                        var g = (child.id >> 8) & 0xFF;
+                        var b = child.id & 0xFF;
+                        gl.uniform3f(gl.current.uniforms.id, r, g, b);
                     }
                     //ask the child to render to this GL context
                     var matrix = child.render(transform, gl);
@@ -250,7 +251,7 @@
                     //canvas coordinates are upside-down
                     var address = (e.offsetX + (canvas.height - e.offsetY) * canvas.width) * 4;
                     var pixelData = self.drawingBuffer.subarray(address, address + 4);
-                    var id = (pixelData[0] << 8) + pixelData[2];
+                    var id = (pixelData[0] << 16) + (pixelData[1] << 8) + pixelData[2];
                     var child = self.idMap[id];
                     if (child) {
                         child.fire(event);
