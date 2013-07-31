@@ -103,9 +103,9 @@
                         //gl.drawArray(), and nobody wants that (it'd be murder on
                         //our memory bandwidth).
                         var circumference = Math.PI * cmd.radius * 2;
-                        var vertexCount = Math.round(circumference / 10);
-                        if (vertexCount < 20) {
-                            vertexCount = 20;
+                        var vertexCount = Math.round(circumference / 6);
+                        if (vertexCount < 8) {
+                            vertexCount = 8;
                         }
                         if (vertexCount > 60) {
                             vertexCount = 60;
