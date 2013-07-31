@@ -7,9 +7,11 @@
     createjs.Stage = function(canvas, antialias) {
         this.canvas = canvas;
         this.children = [];
-        antialias = antialias || false;
-        this.gl = this.canvas.getContext("webgl", { preserveDrawingBuffer: true, antialias: antialias }) || 
-            this.canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, antialias: antialias });
+        if (typeof antialias === "undefined") {
+            antialias = true;
+        }
+        this.gl = this.canvas.getContext("webgl", { preserveDrawingBuffer: true, antialias: antialias, alpha: false }) || 
+            this.canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true, antialias: antialias, alpha: false });
         this.setupGL();
         this.bindEvents();
         this.idMap = {};
@@ -68,6 +70,8 @@
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
             gl.enable(gl.BLEND);
             gl.disable(gl.DEPTH_TEST);
+            gl.clearColor(1, 1, 1, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
 
             vector.uniforms = {};
 
@@ -199,7 +203,12 @@
                             gl.textured.use();
                         }
                     } else {
-                        //otherwise, we set the uniform and render
+                        //pick (selection) mode
+                        //drop out if the item is invisible to the mouse
+                        if (child.mouseEnabled === false) {
+                            return;
+                        }
+                        //otherwise, we set the ID uniform and render
                         var msb = child.id >> 8;
                         var lsb = child.id & 0xFF;
                         gl.uniform2f(gl.current.uniforms.id, msb, lsb);
@@ -241,7 +250,6 @@
                     //canvas coordinates are upside-down
                     var address = (e.offsetX + (canvas.height - e.offsetY) * canvas.width) * 4;
                     var pixelData = self.drawingBuffer.subarray(address, address + 4);
-                    if (pixelData[1]) console.log(pixelData[1]);
                     var id = (pixelData[0] << 8) + pixelData[2];
                     var child = self.idMap[id];
                     if (child) {

@@ -16,6 +16,7 @@
         this.parent = null;
         this.id = createjs.getGUID();
         this.events = {};
+        this.mouseEnabled = false;
     };
     createjs.Text.prototype = {
         getMatrix: createjs.Shape.prototype.getMatrix,
