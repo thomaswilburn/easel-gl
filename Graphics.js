@@ -247,6 +247,7 @@
         }
     };
 
+    //Generates a 24-bit RGB value from h (0-360), s (0 - 100), and l (0 - 100) values
     createjs.Graphics.getHSL = function(h, s, l) {
         l /= 100;
         s /= 100;
