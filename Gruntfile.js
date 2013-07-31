@@ -25,17 +25,11 @@ module.exports = function(grunt) {
         watch: {
             easel: {
                 files: ["*"],
-                tasks: ["checkout", "concat:easel"]    
+                tasks: ["concat:easel"]
             }
         }
     });
 
-    grunt.registerTask("default", ["checkout", "concat", "watch"]);
-
-    grunt.registerTask("checkout", function() {
-        var c = this.async();
-        child.exec("p4 edit ..\\EaselGL.js", c);
-    });
-
+    grunt.registerTask("default", ["concat", "watch"]);
 
 };
