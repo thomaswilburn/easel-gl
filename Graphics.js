@@ -50,7 +50,7 @@
                 var dx = end.x - start.x;
                 var dy = end.y - start.y;
                 var length = Math.sqrt(dx * dx + dy * dy);
-                var thickness = self.lineWidth >> 1 || 0.5;
+                var thickness = self.lineWidth / 2 || 0.5;
                 var makeEndsMeet = function(a, b) {
                     var vec = { x: b.x - a.x, y: b.y - a.y };
                     var cw = { x: -vec.y / length * thickness, y: vec.x / length * thickness };

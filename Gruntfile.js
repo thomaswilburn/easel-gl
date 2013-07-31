@@ -1,5 +1,7 @@
 /*jshint node:true*/
 
+var child = require("child_process");
+
 module.exports = function(grunt) {
     "use strict";
 
@@ -23,12 +25,17 @@ module.exports = function(grunt) {
         watch: {
             easel: {
                 files: ["*"],
-                tasks: ["concat:easel"]    
+                tasks: ["checkout", "concat:easel"]    
             }
         }
     });
 
-    grunt.registerTask("default", ["concat", "watch"]);
+    grunt.registerTask("default", ["checkout", "concat", "watch"]);
+
+    grunt.registerTask("checkout", function() {
+        var c = this.async();
+        child.exec("p4 edit ..\\EaselGL.js", c);
+    });
 
 
 };
