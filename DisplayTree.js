@@ -13,8 +13,12 @@
     };
     var removeChild = function(child) {
         this.children = this.children.filter(function(item) { return item !== child; });
+        child.parent = null;
     };
     var removeAllChildren = function() {
+        for (var i = 0; i < this.children.length; i++) {
+            this.children[i].parent = null;
+        }
         this.children = [];
     };
 
