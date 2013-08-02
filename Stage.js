@@ -234,13 +234,19 @@
             ["mousemove", "click"].forEach(function(event) {
                 canvas.addEventListener(event, function(e) {
                     if (!self.drawingBuffer) {
+                        //switch to the pick shader
                         gl.pick.use();
+                        //create framebuffer to pull from
+                        var framebuffer = gl.createFramebuffer();
+                        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+                        //render and read from the new texture
                         self.update();
                         var buffer = new Uint8Array(canvas.width * canvas.height * 4);
                         gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
-                        gl.current = null;
-                        self.update();
                         self.drawingBuffer = buffer;
+                        //revert to regular rendering
+                        gl.current = null;
+                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                     }
                     //Would love to have this in Firefox
                     if (!e.offsetX) {
