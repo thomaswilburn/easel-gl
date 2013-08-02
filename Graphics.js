@@ -139,13 +139,15 @@
                 }
             }
 
-            //Currently, more than half the time of the render loop is spent here.
-            //Probably much of that time is just from repeatedly getting the same
-            //attribute locations and setting up buffers. The best strategy to
-            //minimize this would be to call this code only when finished or when
-            //switching away from a vector program, but then we would have to use
-            //a single shared buffer across all vector instances rendered at a
-            //time.
+            //Currently, more than half the time of the render loop is spent
+            //here. Probably much of that time is just from repeatedly getting
+            //the same attribute locations and setting up buffers. The best
+            //strategy to minimize this would be to call this code only when
+            //finished or when switching away from a vector program, but then
+            //we would have to use a single shared buffer across all vector
+            //instances rendered at a time, and we would lose the ability to
+            //set the vector translation via a uniform (it would have to go
+            //into the vertex buffer).
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(commands), gl.STATIC_DRAW);
 
             var a_position = gl.getAttribLocation(gl.current.program, "a_position");
