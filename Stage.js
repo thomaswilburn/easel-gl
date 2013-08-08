@@ -231,6 +231,13 @@
             var self = this;
             var entered = null;
 
+            canvas.addEventListener("mouseout", function(event) {
+                if (entered) {
+                    entered.fire("mouseout");
+                }
+                entered = null;
+            });
+
             ["mousemove", "click"].forEach(function(event) {
                 canvas.addEventListener(event, function(e) {
                     if (!self.drawingBuffer) {
