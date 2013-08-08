@@ -5,8 +5,8 @@ var child = require("child_process");
 module.exports = function(grunt) {
     "use strict";
 
-    grunt.loadNpmTasks("grunt-contrib-concat");
-    grunt.loadNpmTasks("grunt-contrib-watch");
+    require("grunt-contrib-concat/tasks/concat")(grunt);
+    require("grunt-contrib-watch/tasks/watch")(grunt);
 
     grunt.initConfig({
         concat: {
