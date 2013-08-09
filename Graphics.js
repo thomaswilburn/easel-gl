@@ -75,6 +75,15 @@
             for (var i = 0; i < this.stack.length; i++) {
                 var cmd = this.stack[i];
                 switch (cmd.type) {
+                    
+                    case "triangle":
+                        prepCommand([
+                            cmd.x1, cmd.y1,
+                            cmd.x2, cmd.y2,
+                            cmd.x3, cmd.y3
+                        ]);
+                    break;
+
                     case "rect":
                         prepCommand([
                             cmd.x, cmd.y,
@@ -242,6 +251,11 @@
         setStrokeStyle: function(width) {
             this.lineWidth = width;
             return this;
+        },
+        closePath: function() {
+            //we'll need to run through the stack, look for line functions,
+            //and build a set of triangles out of them. That'll also mean
+            //adding a triangle command.
         },
         clear: function() {
             this.stack = [];
