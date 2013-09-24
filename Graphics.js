@@ -12,6 +12,12 @@
             b: 0,
             a: 1
         };
+        this.strokeColor = {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 1
+        };
         this.penCoords = {
             x: 0,
             y: 0
@@ -22,129 +28,42 @@
         render: function(transform, gl, id) {
 
             id = id || 0;
-
             var self = this;
-            var fill = this.fillColor;
-            var pen = this.penCoords;
-            
+
             var buffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 
             var commands = [];
             var bufferLength = 0;
 
+            //reset values that may be changed during draw operations
+            this.lineWidth = 2;
+
             //For each vertex, we also fill in four floats for the color, allowing
             //multiple colored shapes to be drawn with a single drawArrays() call.
-            var prepCommand = function(coords) {
+            var prepCommand = function(coords, isStroke) {
+                var color = isStroke? self.strokeColor : self.fillColor;
                 for (var i = 0; i < coords.length; i += 2) {
-                    commands.push(coords[i], coords[i + 1], fill.r, fill.g, fill.b, fill.a);
+                    commands.push(coords[i], coords[i + 1], color.r, color.g, color.b, color.a);
                 }
                 bufferLength += coords.length >> 1;
             };
 
-            //Since WebGL lacks real lines, and probably won't get them anytime
-            //soon, we fake them by creating a quad along the length of the line.
-            //It's complex enough that we pull it out into its own utility
-            //function.
-            var makeLine = function(start, end) {
-                var dx = end.x - start.x;
-                var dy = end.y - start.y;
-                var length = Math.sqrt(dx * dx + dy * dy);
-                var thickness = self.lineWidth / 2 || 0.5;
-                var makeEndsMeet = function(a, b) {
-                    var vec = { x: b.x - a.x, y: b.y - a.y };
-                    var cw = { x: -vec.y / length * thickness, y: vec.x / length * thickness };
-                    var ccw = { x: vec.y / length * thickness, y: -vec.x / length * thickness };
-                    return [{ x: a.x + cw.x, y: a.y + cw.y }, {x: a.x + ccw.x, y: a.y + ccw.y }];
-                };
-                var corners = [].concat(makeEndsMeet(start, end), makeEndsMeet(end, start));
-                var a = corners[0];
-                var b = corners[1];
-                var c = corners[2];
-                var d = corners[3];
-                return [
-                    a.x, a.y,
-                    b.x, b.y,
-                    c.x, c.y,
-                    c.x, c.y,
-                    d.x, d.y,
-                    a.x, a.y
-                ];
-            };
-
+            //Formerly, this was a giant switch/case statement. Instead, we'll
+            //look up draw operations on the brushes object and call the
+            //function we find there. We also move the pen after all
+            //operations, not just move or line. This effectively makes "move"
+            //a no-op.
             for (var i = 0; i < this.stack.length; i++) {
                 var cmd = this.stack[i];
-                switch (cmd.type) {
-                    
-                    case "triangle":
-                        prepCommand([
-                            cmd.x1, cmd.y1,
-                            cmd.x2, cmd.y2,
-                            cmd.x3, cmd.y3
-                        ]);
-                    break;
-
-                    case "rect":
-                        prepCommand([
-                            cmd.x, cmd.y,
-                            cmd.x, cmd.y + cmd.h,
-                            cmd.x + cmd.w, cmd.y,
-                            cmd.x + cmd.w, cmd.y,
-                            cmd.x + cmd.w, cmd.y + cmd.h,
-                            cmd.x, cmd.y + cmd.h
-                        ]);
-                    break;
-
-
-                    case "line":
-                        var linePoly = makeLine({x: pen.x, y: pen.y}, {x: cmd.x, y:cmd.y}, cmd.thickness);
-                        prepCommand(linePoly);
-                    //fall through!
-
-                    case "move":
-                        pen.x = cmd.x;
-                        pen.y = cmd.y;
-                    break;
-
-                    case "circle":
-                        //we have to fake a triangle fan here, unfortunately.
-                        //otherwise, circles would have to have their own
-                        //gl.drawArray(), and nobody wants that (it'd be murder on
-                        //our memory bandwidth).
-                        var circumference = Math.PI * cmd.radius * 2;
-                        var vertexCount = Math.round(circumference / 6);
-                        if (vertexCount < 8) {
-                            vertexCount = 8;
-                        }
-                        if (vertexCount > 60) {
-                            vertexCount = 60;
-                        }
-                        var sweep = Math.PI * 2 / vertexCount;
-                        var last = sweep;
-                        var vertices = [];
-                        var x0 = cmd.radius;
-                        var y0 = 0;
-                        for (var j = sweep * 2; j <= Math.PI * 2; j += sweep) {
-                            var x1 = cmd.x + Math.cos(j) * cmd.radius;
-                            var y1 = cmd.y + Math.sin(j) * cmd.radius;
-                            var x2 = cmd.x + Math.cos(last) * cmd.radius;
-                            var y2 = cmd.x + Math.sin(last) * cmd.radius;
-                            vertices.push(
-                                x0, y0,
-                                x2, y2,
-                                x1, y1
-                            );
-                            last = j;
-                        }
-                        prepCommand(vertices);
-                    break;
-
-                    case "fill":
-                        fill.r = cmd.r;
-                        fill.g = cmd.g;
-                        fill.b = cmd.b;
-                        fill.a = cmd.a;
-                    break;
+                var brushes = createjs.Graphics.brushes;
+                if (cmd.type in brushes) {
+                    var verts = brushes[cmd.type].call(this, cmd, i, this.stack);
+                    if (verts) prepCommand(verts, cmd.type === "line");
+                }
+                if ("x" in cmd && "y" in cmd) {
+                    this.penCoords.x = cmd.x;
+                    this.penCoords.y = cmd.y;
                 }
             }
 
@@ -208,7 +127,7 @@
             });
             return this;
         },
-        beginFill: function(color, alpha) {
+        convertColor: function(color, alpha) {
             if (typeof alpha === "undefined") {
                 alpha = 1;
             }
@@ -220,7 +139,7 @@
                     var g = parseInt(color[1], 10);
                     var b = parseInt(color[2], 10);
                     if (color[3]) {
-                        alpha = parseFloat(color[3], 10);
+                        alpha = color[3];
                     }
                     color = (r << 16) + (g << 8) + (b & 0xFF);
                 } else if (color.indexOf("hsl" === 0)) {
@@ -235,27 +154,36 @@
                     color = parseInt(color, 16);
                 }
             }
-            this.stack.push({
-                type: "fill",
+            return {
                 r: Number((color >> 16) & 0xFF) / 255,
                 g: Number((color >> 8) & 0xFF) / 255,
                 b: Number(color & 0xFF) / 255,
-                a: alpha
-            });
+                a: Number(alpha)
+            };
+        },
+        beginFill: function(color, alpha) {
+            var paint = this.convertColor(color, alpha);
+            paint.type = "fill";
+            this.stack.push(paint);
             return this;
         },
-        beginStroke: function(color) {
-            this.beginFill(color);
+        beginStroke: function(color, alpha) {
+            var paint = this.convertColor(color, alpha);
+            paint.type = "stroke";
+            this.stack.push(paint);
             return this;
         },
         setStrokeStyle: function(width) {
-            this.lineWidth = width;
+            this.stack.push({
+                type: "width",
+                value: width
+            });
             return this;
         },
         closePath: function() {
             //we'll need to run through the stack, look for line functions,
-            //and build a set of triangles out of them. That'll also mean
-            //adding a triangle command.
+            //and build a set of triangles out of them. 
+            this.stack.push({ type: "close" });
         },
         clear: function() {
             this.stack = [];
@@ -265,8 +193,8 @@
 
     //Generates a 24-bit RGB value from h (0-360), s (0 - 100), and l (0 - 100) values
     createjs.Graphics.getHSL = function(h, s, l) {
-        l /= 100;
-        s /= 100;
+        l = Math.min(1, l / 100);
+        s = Math.min(1, s / 100);
         h = h % 360;
         var c = (1 - Math.abs(2 * l - 1)) * s;
         h = (h / 60);
